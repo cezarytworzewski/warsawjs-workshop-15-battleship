@@ -1,29 +1,44 @@
-const gameContainer = document.querySelector('#game');
+/*const gameContainer = document.querySelector('#game');
 const cell = document.createElement('div');
 const textNode = document.createTextNode('Hell, world');
-//cell.textContent = 'Hello World';
 cell.appendChild(textNode);
 gameContainer.appendChild(cell);
-
-/*console.log(typeof onClick);
-console.log(typeof onClick2);*/
 
 let onClick = function onClick() {
     cell.textContent = 'Clicked';
 };
 
+cell.addEventListener('click', onClick);*/
+'use strict';
 
-cell.addEventListener('click', onClick);
+class Component{
+    getElement() { 
+        return this._element;
+    }
+}
+
+class CellComponent extends Component {
+    constructor() {
+        super(); //wywołuje konstruktor bazowy
+        this._state = 'unknown';
+        this._element = document.createElement('td');
+        const self = this;
+        this._element.addEventListener('click', function() {
+            this.setState('miss');
+        }.bind(this));
+        this._refresh();
+    }
     
-/*}
-const onClick2 = function() {
-    cell.textContent = 'Clicked';
-}*/
+    setState(stateName) {
+        this._state = stateName;
+        this._refresh();
+    }  
+    
+    _refresh() {
+        this._element.textContent = this._state;
+        this._element.className = 'cell_' + this._state;
+    }
+}
 
-/*console.log(function() {
-    cell.textContent = 'Clicked';
-}.name.length);*/
-
-/*cell.addEventListener('click', function() {
-    cell.textContent = 'Clicked';
-})*/
+const myCell = new CellComponent();
+document.getElementById('cellContainer').appendChild(myCell.getElement());

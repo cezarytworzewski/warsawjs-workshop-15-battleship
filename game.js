@@ -46,7 +46,7 @@ class CellComponent extends Component {
 }
 
 class BoardComponent extends Component {
-constructor({
+    constructor({
         handleCellClick,
         size = 8
     }) {
@@ -77,7 +77,6 @@ constructor({
         // Find the appropriate cell, call its setState().
         const key = `${location.row}x${location.column}`;
         this._cells[key].setState(state);
-
     }
 }
 
@@ -96,16 +95,16 @@ class GameController {
 
 // ### Models ###
 class CellModel {
-    constructor({hasShip}) {
+    constructor(hasShip) {
         this._hasShip = hasShip;
         this._firedAt = false;
     }
-    
+
     fire() {
         //Guard clause
-       if (this._firedAt) {
-           return undefined;
-       } 
+        if (this._firedAt) {
+            return undefined;
+        }
         this._firedAt = true;
         //console.log(this);
         return (this._hasShip ? 'hit' : 'miss');
@@ -113,18 +112,51 @@ class CellModel {
 }
 
 class BoardModel {
-    constructor({size = 8} = {}) {
+    constructor({
+        size = 8
+    } = {}) {
         this._cells = {}; //pusty obiekt - bez właściwości
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
-                this._cells[`${i}x${j}`] = new CellModel({hasShip: false});
+                let hasShip;
+                if (Math.random() < 0.2) {
+                    hasShip = true;
+                } else {
+                    hasShip = false;
+                }
+                this._cells[`${i}x${j}`] = new CellModel(hasShip);
             }
         }
+        // Initialize an empty observer map:
+        this._observers = {};
     }
     fireAt(location) {
         const target = this._cells[`${location.row}x${location.column}`];
         const firingResult = target.fire();
-        //TODO: Deliver the changes to the view!
+        if (firingResult) { // elementy nie będa znikać
+
+
+            //TODO: Deliver the changes to the view!
+            this._notifyObservers('firedAt', {
+                location,
+                firingResult
+            });
+        }
+    }
+
+    _notifyObservers(type, data) {
+        // Run all saved observers for given type.
+        (this._observers[type] || []).forEach(function (observer) {
+            observer(data);
+        });
+    }
+
+    addObserver(type, observeFunction) {
+        // Save the observer function for running later.
+        if (!this._observers[type]) {
+            this._observers[type] = [];
+        }
+        this._observers[type].push(observeFunction);
     }
 }
 
@@ -134,11 +166,17 @@ function handleCellClick(...args) { //to 'args' po wielokropku możemy nazwać j
     myController.handleCellClick.apply(myController, args);
 }
 
-
-const boardView = new BoardComponent({ handleCellClick, location: 0});
-const boardModel = new BoardModel() 
-
+const boardView = new BoardComponent({
+    handleCellClick
+});
+const boardModel = new BoardModel()
 
 myController = new GameController(boardModel);
+boardModel.addObserver('firedAt', function ({
+    location,
+    firingResult
+}) {
+    boardView.setCellState(location, firingResult);
+});
 const boardContainer = document.getElementById('boardContainer');
 boardContainer.appendChild(boardView.getElement());
